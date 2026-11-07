@@ -1,0 +1,22 @@
+name: Dashboard checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check installer syntax
+        run: bash -n scripts/install.sh
+      - name: Run dashboard regression tests
+        run: node tests/check-dashboard.cjs
+      - name: Run malicious-input regression tests
+        run: node tests/security.cjs
