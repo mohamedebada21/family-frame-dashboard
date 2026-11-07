@@ -1,0 +1,23 @@
+# Local data and media: keep out of version control.
+backups/
+*backup*.json
+*.mp3
+*.apk
+*.crt
+*.pem
+*.log
+.env
+.env.*
+.DS_Store
+node_modules/
+*.zip
+*.tar.gz
+
+# Personal media and credential containers
+*.jpg
+*.jpeg
+*.png
+*.DNG
+*.key
+*.p12
+*.pfx
