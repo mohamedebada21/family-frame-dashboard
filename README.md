@@ -1,6 +1,6 @@
 # Family Frame Dashboard
 
-A local touchscreen family dashboard with a combined clock, weather and Queens prayer screen. This is the Version 7.1 HTML with backup-input validation, packaged with repeatable installation instructions.
+A local touchscreen family dashboard with a combined clock, weather and Queens prayer screen. Version 7.2 adds live Cairo Quran Radio.
 
 ## Start here
 
@@ -25,6 +25,7 @@ Then follow [SETUP.md](SETUP.md). Do not run the installer until ADB and Fully a
 - Clock size/position controls and a combined clock/weather/prayer page.
 - Weather from Open-Meteo with selectable city and temperature units.
 - Five daily prayer start times for Queens, next-prayer countdown and optional adhan playback.
+- Cairo Quran Radio on **Clock & Weather** and **Prayer clock**. Tap **Play radio** to listen over Wi-Fi. The radio stops for the adhan. Tap Play again when the adhan ends.
 - Local browser storage; dashboard JSON export/import.
 
 ## What has been tested

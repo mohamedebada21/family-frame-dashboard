@@ -14,3 +14,53 @@ let pending=[];ctx.XMLHttpRequest=function(){this.open=(method,url)=>{this.url=u
 ctx.go('Clock & Weather');for(const style of ['classic','flip','analog','night']){ctx.setClockStyle(style);assert.equal(JSON.parse(data).clockOptions.style,style);assert(el('view').innerHTML.includes('clockstyle-'+style));if(style==='analog')assert(el('bigtime').innerHTML.includes('<svg'));if(style==='flip')assert(el('bigtime').innerHTML.includes('flipdigit'))}ctx.clockStyles();assert(el('modal').innerHTML.includes('setClockStyle'));ctx.closeModal();ctx.toggleWeather();assert(JSON.parse(data).clockOptions.hideWeather);assert(el('view').innerHTML.includes('weatherhidden'));let count=pending.length;ctx.loadWeather(true);assert.equal(pending.length,count);while(pending.length)pending.shift().onerror();ctx.XMLHttpRequest=function(){this.open=function(){throw {name:'SecurityError'}}};ctx.toggleWeather();assert(el('weatherpanel').innerHTML.includes('SecurityError'));ctx.loadWeather(true);assert(!el('weatherpanel').innerHTML.includes('Updating weather'));assert.equal(JSON.parse(data).events[0].title,'Existing event');console.log('Passed four saved clock styles, analog SVG, flip digits, weather toggle, and recovery from browser security exceptions.');
 ctx.go('Clock & Weather');for(const style of ['classic','flip','analog','night']){ctx.setClockStyle(style);for(const size of ['small','medium','large','xlarge']){ctx.setClockLayout('size',size);for(const position of ['top-left','top-center','top-right','middle-left','middle-center','middle-right','bottom-left','bottom-center','bottom-right']){ctx.setClockLayout('position',position);assert.equal(JSON.parse(data).clockOptions.position,position);assert.equal(JSON.parse(data).clockOptions.size,size);assert(el('view').innerHTML.includes('pos-'+position+' size-'+size));assert(el('view').innerHTML.includes('clockgroup'));}}}ctx.setClockLayout('position','invalid');assert.equal(JSON.parse(data).clockOptions.position,'bottom-right');ctx.resetClockLayout();assert.equal(JSON.parse(data).clockOptions.position,'middle-center');assert.equal(JSON.parse(data).clockOptions.size,'large');assert.equal(JSON.parse(data).events[0].title,'Existing event');console.log('Passed all 144 style/size/position combinations, persistence, invalid-input rejection, reset and existing data preservation.');
 ctx.go('Clock & Weather');assert(el('view').innerHTML.includes('hubweather'));assert(el('view').innerHTML.includes('hubprayers'));assert(el('view').innerHTML.includes('id="bigtime"'));assert(el('view').innerHTML.includes('id="weatherpanel"'));for(const name of ['Fajr','Dhuhr','Asr','Maghrib','Isha'])assert(el('view').innerHTML.includes(name));assert(el('view').innerHTML.includes('Stop audio'));console.log('Passed combined clock/weather/prayer screen, five prayer cards, countdown container and audio controls.');
+
+function mockAudio(){
+  return {
+    src:'', paused:true, plays:0,
+    play(){this.paused=false;this.plays++;return {catch:handler=>{this.reject=handler;}};},
+    pause(){this.paused=true;},
+    removeAttribute(name){assert.equal(name,'src');this.src='';},
+    load(){this.loads=(this.loads||0)+1;}
+  };
+}
+const radio=els.radioplayer=mockAudio(),adhan=els.prayerplayer=mockAudio();
+const timers=new Map();
+let nextTimer=0;
+ctx.setTimeout=(fn,ms)=>{const key=++nextTimer;timers.set(key,{fn,ms});return key;};
+ctx.clearTimeout=key=>timers.delete(key);
+assert(el('view').innerHTML.includes('Play radio'));
+assert.equal(radio.plays,0,'opening the dashboard must not start the stream');
+ctx.toggleRadio();
+assert.equal(new URL(radio.src).protocol,'https:');
+radio.onplaying();
+assert(el('radiostatus').textContent.includes('Live'));
+ctx.go('Prayer clock');
+assert(el('view').innerHTML.includes('Stop radio'),'audio state survives screen changes');
+ctx.testAdhan();
+assert.equal(radio.src,'','adhan must disconnect the stream');
+assert(radio.paused);
+assert.equal(adhan.plays,1);
+assert(el('radiotoggle').disabled);
+ctx.toggleRadio();
+assert.equal(radio.plays,1,'radio cannot start during adhan');
+adhan.onplaying();
+adhan.onended();
+assert(!el('radiotoggle').disabled);
+assert.equal(radio.plays,1,'radio requires a new tap after adhan');
+ctx.toggleRadio();
+const staleReject=radio.reject;
+ctx.toggleRadio();
+assert.equal(radio.src,'');
+ctx.toggleRadio();
+staleReject();
+assert(radio.src,'a stale rejection must not stop a new stream');
+const timeout=Array.from(timers.values()).find(t=>t.ms===15000);
+assert(timeout);
+timeout.fn();
+assert.equal(radio.src,'');
+assert(el('radiostatus').textContent.includes('timed out'));
+ctx.testAdhan();
+adhan.reject();
+assert(!el('radiotoggle').disabled,'failed adhan must release radio controls');
+console.log('Passed Cairo radio opt-in, stop, timeout, stale callback protection, and adhan priority.');
