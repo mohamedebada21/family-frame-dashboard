@@ -1,8 +1,9 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync(require('path').join(__dirname,'..','family-calendar.html'),'utf8'),script=html.match(/<script>([\s\S]*)<\/script>/)[1];
-const els={};function el(k){return els[k]||(els[k]={innerHTML:'',textContent:'',value:'',focus(){}})}
+const els={};function el(k){return els[k]||(els[k]={innerHTML:'',textContent:'',value:'',focus(){},setAttribute(name,value){this[name]=value;}})}
 let data=JSON.stringify({events:[{id:'old1',title:'Existing event',date:'2026-11-06',time:'09:00',person:'Family'}],tasks:[],shopping:[],meals:{},photo:''});
-const ctx={console,Date,Math,JSON,Number,String,Array,localStorage:{getItem:()=>data,setItem:(k,v)=>data=v},document:{body:{className:''},getElementById:el,querySelector:()=>el('query')},setTimeout:()=>0,setInterval:()=>0,confirm:()=>true,alert:()=>{},Blob,URL};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(script,ctx);
+const preferences={};
+const ctx={console,Date,Math,JSON,Number,String,Array,localStorage:{getItem:k=>k==='ourFamilyBoardV1'?data:preferences[k],setItem:(k,v)=>{if(k==='ourFamilyBoardV1')data=v;else preferences[k]=v;}},document:{body:{className:''},getElementById:el,querySelector:()=>el('query')},setTimeout:()=>0,setInterval:()=>0,confirm:()=>true,alert:()=>{},Blob,URL};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(script,ctx);
 for(const tab of ['Dashboard','Calendar','Tasks','Shopping','Meals','Photos','Family','Rewards','Settings']){ctx.go(tab);assert(el('view').innerHTML.length>100,tab)}
 ctx.memberForm();el('mname').value='Test member';el('mcolor').value='#dfeadc';el('editform').onsubmit({preventDefault(){}});let s=JSON.parse(data);assert.equal(s.events[0].title,'Existing event');let mid=s.members[0].id;
 ctx.choreForm();el('ctitle').value='Read';el('cmember').value=mid;el('cpoints').value='5';el('editform').onsubmit({preventDefault(){}});s=JSON.parse(data);let tid=s.tasks[0].id;ctx.toggleItem('tasks',tid);s=JSON.parse(data);assert.equal(s.ledger.reduce((n,l)=>n+l.amount,0),5);
@@ -64,3 +65,31 @@ ctx.testAdhan();
 adhan.reject();
 assert(!el('radiotoggle').disabled,'failed adhan must release radio controls');
 console.log('Passed Cairo radio opt-in, stop, timeout, stale callback protection, and adhan priority.');
+
+ctx.toggleRadio();
+ctx.setRadioVolume('36',true);
+assert.equal(radio.volume,0.36);
+assert.equal(el('radiovolumepct').textContent,'36%');
+assert.equal(adhan.volume,0.8,'radio volume must be separate from adhan volume');
+ctx.toggleRadioMute();
+assert(radio.muted);
+assert.equal(el('radiomute')['aria-pressed'],'true');
+assert(el('radiostatus').textContent.includes('muted'));
+ctx.toggleRadio();
+const playCount=radio.plays;
+ctx.testRadioSound();
+assert.equal(radio.plays,playCount,'speaker test must prompt for unmute');
+ctx.toggleRadioMute();
+ctx.testRadioSound();
+assert(radio.src.startsWith('data:audio/mpeg;base64,'),'speaker test must work without a network request');
+radio.onplaying();
+assert(el('radiostatus').textContent.includes('test tone'));
+radio.onended();
+assert.equal(radio.src,'');
+assert(el('radiostatus').textContent.includes('Android Media volume'));
+ctx.toggleRadioMute();
+vm.runInContext(script,ctx);
+ctx.go('Prayer clock');
+assert(el('view').innerHTML.includes('value="36" oninput="setRadioVolume'));
+assert(el('view').innerHTML.includes('aria-pressed="true">Unmute'));
+console.log('Passed saved radio volume and mute, independent adhan volume, and offline speaker test.');

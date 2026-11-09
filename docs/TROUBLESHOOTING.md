@@ -92,6 +92,12 @@ References: [Let's Encrypt certificate hierarchy](https://letsencrypt.org/certif
 - The cache covers downloaded months only. Reconnect before cached dates run out.
 - Changing weather city does not change the fixed prayer location.
 
+## Radio plays but you hear nothing
+
+On **Clock & Weather** or **Prayer clock**, unmute the radio, raise its **Volume** slider, and tap **Test sound**. This plays a brief tone from the dashboard file. If it plays, tap **Play radio** again and check the status. A connection error or timeout points to stream access or browser playback, so check Wi-Fi and try the official station link on a newer browser.
+
+If the tone is quiet or silent, raise Android's **Media** volume while playing audio. If the tone reports a playback error, try **Test adhan now** to check playback using your existing local MP3. The dashboard radio slider and the adhan volume in Prayer settings each depend on Android's media output level.
+
 ## Adhan does not play
 
 ```bash
