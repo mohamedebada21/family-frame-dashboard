@@ -12,6 +12,7 @@ If enabled on the repository, use GitHub's **Security → Report a vulnerability
 - Weather/geocoding requests send selected coordinates or a search query to Open-Meteo. Prayer requests send the fixed Queens coordinates and calculation parameters to AlAdhan. These are HTTPS requests.
 - An optional HTTPS adhan URL contacts its chosen host. Prefer a local MP3; do not put credentials or private tokens in audio URLs.
 - Tapping Play radio connects over HTTPS to either the Cairo Quran Radio MP3 relay at `radio.xecod.com` or the broadcaster's HLS feed at `webvideocore.net`. The official station link opens `misrquran.gov.eg`.
+- The optional USB relay binds to the Mac's loopback interface and serves only `/cairo.mp3`. The frame uses HTTP to its own loopback port over USB. The Mac fetches the fixed radio URL with normal HTTPS certificate checks and rejects redirects.
 - There is no account login, cloud data store, analytics or automatic calendar synchronization in this source.
 - Browser/device backups may contain personal information. Keep those out of this repository even if `.gitignore` is present.
 - The code retains inline handlers for its old WebView target. It does not claim strict Content Security Policy enforcement. Schema validation and output escaping reduce injection risk but are not a substitute for an updated browser.
