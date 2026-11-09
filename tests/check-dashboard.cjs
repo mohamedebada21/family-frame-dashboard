@@ -18,7 +18,7 @@ ctx.go('Clock & Weather');assert(el('view').innerHTML.includes('hubweather'));as
 
 function mockAudio(){
   return {
-    src:'', paused:true, plays:0,
+    src:'', paused:true, plays:0, currentTime:0,
     play(){this.paused=false;this.plays++;return {catch:handler=>{this.reject=handler;}};},
     pause(){this.paused=true;},
     removeAttribute(name){assert.equal(name,'src');this.src='';},
@@ -35,7 +35,13 @@ assert.equal(radio.plays,0,'opening the dashboard must not start the stream');
 ctx.toggleRadio();
 assert.equal(new URL(radio.src).protocol,'https:');
 radio.onplaying();
+assert(el('radiostatus').textContent.includes('Waiting for playback'));
+radio.ontimeupdate();
+assert.equal(el('radioelapsed').textContent,'','a playing event alone does not establish stream progress');
+radio.currentTime=3;
+radio.ontimeupdate();
 assert(el('radiostatus').textContent.includes('Live'));
+assert.equal(el('radioelapsed').textContent,'0:03');
 ctx.go('Prayer clock');
 assert(el('view').innerHTML.includes('Stop radio'),'audio state survives screen changes');
 ctx.testAdhan();
@@ -58,6 +64,9 @@ staleReject();
 assert(radio.src,'a stale rejection must not stop a new stream');
 const timeout=Array.from(timers.values()).find(t=>t.ms===15000);
 assert(timeout);
+radio.onplaying();
+radio.onwaiting();
+assert(Array.from(timers.values()).includes(timeout),'buffer events must not extend a stalled connection');
 timeout.fn();
 assert.equal(radio.src,'');
 assert(el('radiostatus').textContent.includes('timed out'));
@@ -88,8 +97,25 @@ radio.onended();
 assert.equal(radio.src,'');
 assert(el('radiostatus').textContent.includes('Android Media volume'));
 ctx.toggleRadioMute();
+ctx.setRadioFeed('official');
 vm.runInContext(script,ctx);
 ctx.go('Prayer clock');
 assert(el('view').innerHTML.includes('value="36" oninput="setRadioVolume'));
 assert(el('view').innerHTML.includes('aria-pressed="true">Unmute'));
+assert(el('view').innerHTML.includes('value="official" selected'));
+ctx.toggleRadioMute();
+ctx.toggleRadio();
+assert.equal(new URL(radio.src).hostname,'service.webvideocore.net');
+radio.currentTime=2100;
+radio.onplaying();
+radio.currentTime=2102;
+radio.ontimeupdate();
+assert.equal(el('radioelapsed').textContent,'0:02','report elapsed playback, not the HLS timeline position');
+assert(el('radiostatus').textContent.includes('Official feed'));
+ctx.setRadioFeed('mp3');
+assert.equal(radio.src,'','switching feed stops the old connection');
+ctx.toggleRadio();
+assert.equal(new URL(radio.src).hostname,'radio.xecod.com');
+ctx.toggleRadio();
 console.log('Passed saved radio volume and mute, independent adhan volume, and offline speaker test.');
+console.log('Passed feed switching and persistence, elapsed playback, and stalled stream detection.');
