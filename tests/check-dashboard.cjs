@@ -126,5 +126,13 @@ assert(el('radiostatus').textContent.includes('Check the USB cable and Mac relay
 vm.runInContext(script,ctx);
 ctx.go('Prayer clock');
 assert(el('view').innerHTML.includes('value="usb" selected'));
+ctx.setRadioFeed('local');
+ctx.toggleRadio();
+assert.equal(radio.src,'http://127.0.0.1:8767/cairo.mp3');
+radio.onerror();
+assert(el('radiostatus').textContent.includes('Frame Radio Relay is running'));
+vm.runInContext(script,ctx);
+ctx.go('Prayer clock');
+assert(el('view').innerHTML.includes('value="local" selected'));
 console.log('Passed saved radio volume and mute, independent adhan volume, and offline speaker test.');
 console.log('Passed feed switching and persistence, elapsed playback, and stalled stream detection.');
