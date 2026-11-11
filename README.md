@@ -1,6 +1,6 @@
 # Family Frame Dashboard
 
-A local touchscreen family dashboard with a combined clock, weather and Queens prayer screen. This is the Version 7.1 HTML with backup-input validation, packaged with repeatable installation instructions.
+A local touchscreen family dashboard with a combined clock, weather and Queens prayer screen. Version 7.6 adds an on-frame radio relay for older media players that cannot connect to the HTTPS feeds.
 
 ## Start here
 
@@ -25,6 +25,10 @@ Then follow [SETUP.md](SETUP.md). Do not run the installer until ADB and Fully a
 - Clock size/position controls and a combined clock/weather/prayer page.
 - Weather from Open-Meteo with selectable city and temperature units.
 - Five daily prayer start times for Queens, next-prayer countdown and optional adhan playback.
+- Cairo Quran Radio on **Clock & Weather** and **Prayer clock**. Tap **Play radio** to listen over Wi-Fi. The radio stops for the adhan. Tap Play again when the adhan ends.
+- If a feed is silent or stalls, select the other feed and tap **Play radio**. The broadcaster's official feed uses HLS, and support depends on the frame's browser.
+- For older frames that fail HTTPS playback, use the [Android relay companion](android-relay/README.md) to listen without a computer connected. The [USB relay](docs/TROUBLESHOOTING.md#usb-relay-for-older-frames) remains available.
+- The radio volume and mute settings are saved on the frame. Use **Test sound** to play a short tone without Wi-Fi. For the adhan volume, use **Prayer settings**.
 - Local browser storage; dashboard JSON export/import.
 
 ## What has been tested

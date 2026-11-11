@@ -1,160 +1,102 @@
-# Set up another Android frame
+# Install Family Frame Dashboard on an Android tablet
 
-This procedure starts with a fresh device. For an existing installation, export a backup first and follow [Backups and updates](docs/BACKUPS.md).
+Use this guide to install version 7.6 on a compatible Android tablet. The original setup used Android 6.0.1 and Fully Kiosk Browser 1.61.4. Check that your tablet allows app installation and USB debugging and that Fully offers a compatible build.
 
-## 1. Prepare the equipment
+The examples use Mac Terminal or Bash on Linux. The `adb` commands also work on Windows with Platform Tools on PATH and the tablet paths substituted for `$TABLET_DIR`.
 
-- Android touchscreen device that permits app installation and USB debugging.
-- Its normal power adapter, reliable Wi-Fi and a USB **data** cable.
-- Mac or Linux computer, this extracted project folder and ADB.
-- Fully Kiosk Browser APK compatible with the device, from the [official download page](https://www.fully-kiosk.com/en/#download-box).
-- Optional: your chosen, permitted-to-use adhan recording named `adhan.mp3`.
+## 1. Download the dashboard and tools
 
-The reference frame runs Android 6.0.1 / armeabi-v7a. Do not assume a current APK supports every old device; select a compatible build from the official source. Do not flash firmware just to follow this procedure.
+1. Save [`family-calendar.html`](family-calendar.html) from this branch into your computer's Downloads folder. On GitHub, use **Download raw file**. Keep the filename and `.html` extension. If you cloned this branch, you can use the file from your clone instead.
+2. Download and extract [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools).
+3. On the tablet, join Wi-Fi and enable automatic date and time. Install [Fully Kiosk Browser](https://www.fully-kiosk.com/docs/en/getting-started/downloads) from Google Play or Fully's official site. Open it once so Android creates its storage folder.
 
-## 2. Install ADB on the computer
+## 2. Connect the tablet and authorize ADB
 
-Download [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools), extract it, and add that directory to your PATH. For example, if extracted into Downloads, run this in the current Mac terminal:
+On the tablet, open **Settings → About tablet** and tap **Build number** seven times. Some tablets put it under **Software information**. Enable **USB debugging** under **Developer options**, connect with a USB data cable, unlock the tablet and accept its authorization prompt. Custom photo frames may have different settings. [Android USB setup](https://developer.android.com/studio/run/device)
+
+If you extracted Platform Tools into Downloads, run:
 
 ```bash
 export PATH="$HOME/Downloads/platform-tools:$PATH"
-adb version
-```
-
-This PATH change lasts only for this terminal session. Alternatively use your existing ADB installation.
-
-## 3. Connect and authorize the frame
-
-1. Power the frame normally. Connect it to the computer with the data cable.
-2. Enable USB debugging in Android developer settings if the device exposes them. Tapping Build number is not supported by every custom frame firmware; it did not expose settings on the reference frame. If debugging is unavailable, consult that model's manufacturer instructions.
-3. Accept the USB debugging authorization prompt on the frame, if shown.
-4. Run:
-
-```bash
 adb devices -l
 ```
 
-Proceed only when the target appears with status `device`. `unauthorized` requires approval on the frame; an empty list usually requires checking the cable, hub, USB port or debugging availability. If multiple devices are connected, use `adb -s SERIAL ...` for each manual command below, replacing SERIAL with your chosen device's identifier.
+Continue when your tablet shows `device`. If it shows `unauthorized`, approve the prompt on the tablet. For an empty list, check the cable, USB port and debugging setting. Disconnect other devices or add `-s SERIAL` after `adb` in each command.
 
-Record the device details:
+## 3. Copy the dashboard
 
-```bash
-adb shell getprop ro.product.model
-adb shell getprop ro.build.version.release
-adb shell getprop ro.product.cpu.abi
-adb shell wm size
-```
-
-## 4. Configure Android
-
-- Connect Wi-Fi and confirm internet access.
-- Set the correct date/time and timezone. For the Queens prayer build, use New York / Eastern time, with automatic time where available.
-- Set media volume to an audible level.
-
-Useful commands to open the corresponding settings pages:
+Use Fully's app-specific storage on Android 11 and newer. On Android 6–10, set `TABLET_DIR=/sdcard/Download` in place of the assignment below. For an existing install, first [export a backup](docs/BACKUPS.md) and use the directory from the existing Start URL.
 
 ```bash
-adb shell am start -a android.settings.WIFI_SETTINGS
-adb shell am start -a android.settings.DATE_SETTINGS
-adb shell date
+cd ~/Downloads
+TABLET_DIR=/sdcard/Android/data/de.ozerov.fully/files
+adb shell mkdir -p "$TABLET_DIR"
+adb push family-calendar.html "$TABLET_DIR/family-calendar.html"
+printf 'file://%s/family-calendar.html\n' "$TABLET_DIR"
 ```
 
-## 5. Install Fully Kiosk Browser
+Keep the same terminal open if you plan to copy an adhan recording. The optional [installer script](scripts/install.sh) uses the shared `/sdcard/Download` folder. Use the commands above for an app-specific installation.
 
-Replace the example APK path below with the file you downloaded:
+## 4. Set Fully's Start URL
+
+1. Swipe right from Fully's left edge to open its menu.
+2. Open **Settings → Web Content Settings → Start URL** and enter the URL printed in step 3, including the three slashes. For the shared folder, use `file:///sdcard/Download/family-calendar.html`.
+3. Exit Settings and select the menu action to load the Start URL. Check that the dashboard opens and its buttons respond to touch.
+
+If Fully cannot read the file, check the path and its local-file access. Use the file picker next to the Start URL field if offered. [Fully local files](https://www.fully-kiosk.com/docs/en/faq/localfiles) · [Android 11+ storage](https://www.fully-kiosk.com/docs/en/faq/scoped)
+
+## 5. Set up the clock, weather and prayer times
+
+1. Open **Clock & Weather**. Under **Clock settings**, select the weather city, temperature units and time format. Choose a clock **Style** and adjust **Size & position**. Tap **Show weather** if needed, then refresh.
+2. Open **Prayer settings**. Prayer times in this build are for **Queens, New York**. Changing the weather city affects the weather only. Set the tablet's time zone to New York for this setup, then refresh prayer times online.
+3. Choose your calculation method and Asr convention. The defaults are ISNA and standard Asr. Compare today's calculated start times with your mosque's schedule before adjusting offsets.
+
+## 6. Add automatic adhan (optional)
+
+Save a recording you have permission to use as `adhan.mp3` in your computer's Downloads. In the same terminal as step 3, run:
 
 ```bash
-adb install -r ~/Downloads/fully-kiosk.apk
-adb shell monkey -p de.ozerov.fully -c android.intent.category.LAUNCHER 1
+adb push ~/Downloads/adhan.mp3 "$TABLET_DIR/adhan.mp3"
+printf 'file://%s/adhan.mp3\n' "$TABLET_DIR"
 ```
 
-Grant the permissions Fully requests for local files. If it is already installed and working, keep that installation. The `-r` option updates an existing package; do not uninstall it as an update step.
+1. Paste the printed URL into the audio source in the dashboard's **Prayer settings**.
+2. In Fully, open **Web Content Settings** and enable **Autoplay Audio**. [Fully web content settings](https://www.fully-kiosk.com/docs/en/configuration/web-content)
+3. In the dashboard's **Adhan controls**, tap **Test adhan now**, then **Test automatic audio in 10 seconds** and wait without touching the screen. Check Android media volume and the dashboard's adhan volume.
+4. After both tests pass, enable **Automatic adhan** and select the prayers. Keep Fully in the foreground and the tablet awake at prayer times. Repeat the delayed test after reboot.
 
-## 6. Copy the dashboard
+## 7. Play Cairo Quran Radio (optional)
 
-In Terminal, change into this extracted project folder. Example:
+1. In **Clock & Weather**, choose **Feed → MP3 relay** or **Official feed**, then tap **Play radio**. Use **Test sound** to check the speaker and adjust the dashboard's radio volume and Android media volume.
+2. If both feeds fail, follow the [Android relay instructions](android-relay/README.md) to obtain a signed `frame-radio-relay.apk` from a trusted source or build and sign it yourself. The relay is intended for Android 6 or newer. With the APK in Downloads, run:
 
-```bash
-cd ~/Downloads/family-frame-dashboard
-bash scripts/install.sh
-```
+   ```bash
+   adb install -r ~/Downloads/frame-radio-relay.apk
+   adb shell am start -n com.familyframe.radio/.MainActivity
+   ```
 
-For multiple attached devices:
+3. On the tablet, tap **Start relay → Open dashboard**. Select **Feed → On-frame relay**, disconnect USB and tap **Play radio** to test over the tablet's Wi-Fi. Starting the relay enables its boot startup. To listen after reboot, tap **Play radio** again.
 
-```bash
-bash scripts/install.sh -s YOUR_DEVICE_SERIAL
-```
+## 8. Enable phone control over home Wi-Fi (optional)
 
-The script checks connectivity and Fully, backs up an existing HTML file locally, transfers the app, verifies the transferred bytes and restarts Fully. It does not configure Fully settings or copy browser data. See the manual equivalent if you prefer:
+1. In Fully, open **Settings → Remote Administration**. Turn on **Enable Remote Administration** and **Remote Admin from Local Network**. Set a strong password. [Fully Remote Administration settings](https://www.fully-kiosk.com/docs/en/configuration/remote-administration)
+2. Find the tablet's IP address in Android's Wi-Fi details or your router's device list. Connect your phone to the same main Wi-Fi and visit the tablet's address on port 2323, for example `http://192.168.1.50:2323`. Keep this on your home network with router port forwarding disabled.
+3. Sign in and check that you can reload the dashboard. Remote Admin controls Fully. Dashboard events and lists stay in the tablet's browser. Fully may display a PLUS trial watermark while Remote Admin is enabled. [Remote Admin controls](https://www.fully-kiosk.com/docs/en/features/remote-admin) · [Fully PLUS licensing](https://www.fully-kiosk.com/docs/en/legal/fully-plus-license)
 
-```bash
-adb push family-calendar.html /sdcard/Download/family-calendar.html
-adb shell am force-stop de.ozerov.fully
-adb shell monkey -p de.ozerov.fully -c android.intent.category.LAUNCHER 1
-```
+## 9. Reboot and verify
 
-## 7. Set Fully's Start URL
+For automatic startup, enable **Device Management → Launch on Boot** if your Fully build offers it. Enable **Keep Screen On** for scheduled adhan. Test that you can open Fully's menu and exit before enabling a kiosk lock. [Fully device management settings](https://www.fully-kiosk.com/docs/en/configuration/device-management)
 
-Open Fully Settings and set **Start URL** to exactly:
+- [ ] Reboot and disconnect USB. Confirm that Fully opens the dashboard and touch controls respond.
+- [ ] Check date, time, weather refresh, the five prayer times and the next-prayer countdown.
+- [ ] Add a test calendar event and confirm it survives restarting Fully.
+- [ ] If configured, test delayed adhan, radio playback and phone access.
+- [ ] If migrating, import your [dashboard backup](docs/BACKUPS.md) and set prayer preferences and the MP3 separately.
+- [ ] Turn off USB debugging when setup is complete.
 
-```text
-file:///sdcard/Download/family-calendar.html
-```
+## Troubleshooting
 
-- Enable JavaScript and local-file access if the browser exposes these options.
-- Enable **Web Content Settings → Autoplay Audio** for adhan.
-- Keep the screen/device awake while the app is in use; disable sleep/screensaver behavior that suspends the page if automatic adhan is required.
-- Configure startup on boot if offered by your Fully version and device. Some options may require a Fully license.
-- Keep **Ignore SSL Errors off**. Use the certificate troubleshooting procedure only if you actually encounter trust errors.
-- Before enabling any kiosk lock, learn how to reopen Fully Settings and record your exit PIN. Test leaving the app first.
-
-The exact labels and available options vary by Fully version. [Official Fully settings documentation](https://www.fully-kiosk.com/docs/en/configuration/web-content).
-
-## 8. Configure the combined display
-
-Open **Clock & Weather**:
-
-1. **Clock settings:** choose weather city, Fahrenheit/Celsius, 12/24-hour time, and whether to open the clock on startup.
-2. **Style:** choose classic, flip, analog or night.
-3. **Size & position:** choose your preferred clock layout.
-4. If the weather is hidden, tap **Show weather**, then refresh.
-5. **Prayer settings:** choose calculation method and Asr convention. Default is ISNA with standard Asr. Compare today's start times with your local mosque; apply minute adjustments only as appropriate.
-
-Prayer times are for Queens regardless of the weather city. They update by date and cache monthly schedules; refresh while online during initial setup.
-
-## 9. Add and test adhan
-
-Copy your recording from the Mac:
-
-```bash
-adb push ~/Downloads/adhan.mp3 /sdcard/Download/adhan.mp3
-```
-
-In **Prayer settings**, set the audio source to:
-
-```text
-file:///sdcard/Download/adhan.mp3
-```
-
-1. Open **Prayer clock** (or **Adhan controls** from the combined display).
-2. Test audio immediately, then test the delayed 10-second playback without touching the screen while waiting.
-3. Check media volume and the app's adhan volume. Stop audio when finished.
-4. Enable **Automatic adhan** and select the prayers you want to hear.
-5. Reboot and repeat the delayed test. Confirm Fully returns to the dashboard and remains awake.
-
-Automatic adhan is off initially. An HTML page cannot guarantee an alarm while Android is asleep, the browser is closed or another app has suspended it. Use a native alarm/prayer app if background reliability is required.
-
-## 10. Acceptance checklist
-
-- [ ] Correct date, time and timezone after reboot.
-- [ ] Dashboard opens and buttons respond to touch.
-- [ ] Clock, weather and prayer cards fit the screen.
-- [ ] Weather refresh completes and shows the chosen city/units.
-- [ ] Five prayer times and next-prayer countdown are correct for Queens.
-- [ ] Adhan immediate and delayed tests work, including after reboot.
-- [ ] A test calendar event survives restarting Fully.
-- [ ] A dashboard backup can be exported and found on the device.
-- [ ] You can reopen Fully Settings and exit the kiosk.
-- [ ] You have recorded prayer settings and saved the MP3 separately.
-
-Keep this completed checklist with the device's model and Fully version. You do not need to repeat the old frame's certificate repair on a new device unless the same trust error occurs.
+- **Stuck in Settings or Remote Admin on the tablet.** Use Android Back or open the Fully menu and load the Start URL. If navigation is hidden and USB debugging is available, connect to the computer and run `adb shell input keyevent 4`.
+- **Weather and radio both fail.** Check internet access on the tablet. If needed, forget and rejoin Wi-Fi with the password. Verify the tablet's date and time if HTTPS fails. Keep Fully's **Ignore SSL Errors** setting off.
+- **Phone access times out.** Check the current tablet IP and both Remote Admin switches. Put both devices on the main Wi-Fi so they can reach each other.
+- For other issues, see [Troubleshooting](docs/TROUBLESHOOTING.md).

@@ -92,6 +92,28 @@ References: [Let's Encrypt certificate hierarchy](https://letsencrypt.org/certif
 - The cache covers downloaded months only. Reconnect before cached dates run out.
 - Changing weather city does not change the fixed prayer location.
 
+## Radio plays but you hear nothing
+
+On **Clock & Weather** or **Prayer clock**, unmute the radio, raise its **Volume** slider, and tap **Test sound**. If you hear the tone but live radio is silent, change **Feed** to **Official feed**, then tap **Play radio**. A timer appears when the browser's playback position advances. If the official HLS feed fails, try **MP3 relay** or use the official station link on a newer browser.
+
+If the tone is quiet or silent, raise Android's **Media** volume while playing audio. If the tone reports a playback error, try **Test adhan now** to check playback using your existing local MP3. The dashboard radio slider and the adhan volume in Prayer settings each depend on Android's media output level.
+
+## USB relay for older frames
+
+If the offline tone works but both feeds time out, check the frame's media logs. A TLS alert such as `TLSV1_ALERT_PROTOCOL_VERSION` means the frame's media player cannot negotiate HTTPS with that server. Use the USB relay so your computer handles HTTPS. It requires Python 3.7 or later, `curl`, and a frame with working USB ADB.
+
+Install the current dashboard HTML using the same file path in Fully. From the repository directory, connect the frame over USB and run:
+
+```bash
+adb reverse tcp:8766 tcp:8766 && python3 scripts/radio-relay.py
+```
+
+Leave Terminal open and select **Feed → USB relay → Play radio** on the frame. The computer must stay awake and connected to the internet and USB while you listen. If you reconnect USB, run the `adb reverse` command again. To stop, press `Ctrl+C` in the relay terminal and run `adb reverse --remove tcp:8766`.
+
+If the dashboard reports a USB connection error, check `adb reverse --list` and the relay terminal. `GET /cairo.mp3` in Terminal means the request reached the computer. A `502` means the computer could not get the audio from the station.
+
+[Android's USB reverse forwarding guide](https://developer.android.com/develop/ui/views/layout/webapps/access-local-server)
+
 ## Adhan does not play
 
 ```bash
