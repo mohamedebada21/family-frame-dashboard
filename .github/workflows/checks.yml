@@ -20,3 +20,7 @@ jobs:
         run: node tests/check-dashboard.cjs
       - name: Run malicious-input regression tests
         run: node tests/security.cjs
+      - name: Check standalone Android integration
+        run: |
+          bash -n android-app/build.sh android-app/test.sh
+          bash android-app/test.sh

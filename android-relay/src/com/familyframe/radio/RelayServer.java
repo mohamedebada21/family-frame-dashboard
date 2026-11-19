@@ -5,6 +5,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -21,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 
 /** One fixed station, exposed only on the frame's loopback interface. */
-final class RelayServer implements Closeable {
+public final class RelayServer implements Closeable {
     static final int PORT = 8767;
     private static final String HOST = "127.0.0.1";
     private static final String PATH = "/cairo.mp3";
@@ -31,24 +33,32 @@ final class RelayServer implements Closeable {
     private final ThreadPoolExecutor workers = new ThreadPoolExecutor(
             0, 4, 15, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     private final Status status;
+    private final int port;
+    private final File localAudio;
     private boolean closed;
 
-    interface Status {
+    public interface Status {
         void update(String message, IOException error);
     }
 
     RelayServer(Status status) throws IOException {
+        this(status, PORT, null);
+    }
+
+    public RelayServer(Status status, int port, File localAudio) throws IOException {
         this.status = status;
+        this.port = port;
+        this.localAudio = localAudio;
         try {
             listener.setReuseAddress(true);
-            listener.bind(new InetSocketAddress(InetAddress.getByName(HOST), PORT));
+            listener.bind(new InetSocketAddress(InetAddress.getByName(HOST), port));
         } catch (IOException error) {
             listener.close();
             throw error;
         }
     }
 
-    void serve() throws IOException {
+    public void serve() throws IOException {
         while (!listener.isClosed()) {
             Socket client = listener.accept();
             synchronized (clients) {
@@ -83,7 +93,8 @@ final class RelayServer implements Closeable {
                 reply(output, "405 Method Not Allowed", "text/plain", true);
                 return;
             }
-            if (!parts[1].equals(PATH)) {
+            boolean adhan = localAudio != null && parts[1].equals("/adhan.mp3");
+            if (!parts[1].equals(PATH) && !adhan) {
                 reply(output, "404 Not Found", "text/plain", true);
                 return;
             }
@@ -97,7 +108,7 @@ final class RelayServer implements Closeable {
                 }
                 if (header.regionMatches(true, 0, "Host:", 0, 5)) {
                     String host = header.substring(5).trim();
-                    if (!host.equals(HOST + ":" + PORT) && !host.equals("localhost:" + PORT)) {
+                    if (!host.equals(HOST + ":" + port) && !host.equals("localhost:" + port)) {
                         reply(output, "400 Bad Request", "text/plain", true);
                         return;
                     }
@@ -107,12 +118,30 @@ final class RelayServer implements Closeable {
                 reply(output, "431 Request Header Fields Too Large", "text/plain", true);
                 return;
             }
-            if (head) reply(output, "200 OK", "audio/mpeg", false);
+            if (adhan) localAudio(output, head);
+            else if (head) reply(output, "200 OK", "audio/mpeg", false);
             else stream(output);
         } catch (IOException ignored) {
             // The browser may close a probe or stop playback at any point.
         } finally {
             release(client);
+        }
+    }
+
+    private void localAudio(OutputStream output, boolean head) throws IOException {
+        if (!localAudio.isFile()) {
+            reply(output, "404 Not Found", "text/plain", true);
+            return;
+        }
+        try (FileInputStream input = new FileInputStream(localAudio)) {
+            String headers = "HTTP/1.0 200 OK\r\nContent-Type: audio/mpeg\r\n"
+                    + "Content-Length: " + input.getChannel().size()
+                    + "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
+            output.write(headers.getBytes(StandardCharsets.US_ASCII));
+            if (head) return;
+            byte[] buffer = new byte[4096];
+            int length;
+            while ((length = input.read(buffer)) != -1) output.write(buffer, 0, length);
         }
     }
 

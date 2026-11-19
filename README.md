@@ -2,6 +2,10 @@
 
 A local touchscreen family dashboard with a combined clock, weather and Queens prayer screen. Version 7.6 adds an on-frame radio relay for older media players that cannot connect to the HTTPS feeds.
 
+## Standalone Android app
+
+To open the dashboard directly as the frame's Home screen, use [Family Frame for Android](android-app/README.md). It bundles the dashboard and radio relay into one installable APK, with a Frame menu for Wi-Fi, audio and Home settings. The app uses Android's system WebView for the existing dashboard layout.
+
 ## Start here
 
 1. Follow [SETUP.md](SETUP.md) for a new Android device.
@@ -50,6 +54,7 @@ The owner confirmed the combined page works on a 102KZ photo frame: Android 6.0.
 ```text
 family-calendar.html          Working app; no build step
 SETUP.md                      New-device procedure
+android-app/                  Standalone Android app and setup
 docs/                         Troubleshooting, backups and GitHub setup
 scripts/install.sh            Checked ADB file deployment (Mac/Linux)
 tests/check-dashboard.cjs     Node-based regression checks
