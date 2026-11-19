@@ -9,8 +9,11 @@ Family Frame is a standalone Android application for the 102KZ Android 6.0.1 fra
 
    ```bash
    adb install -r ~/Downloads/family-frame.apk
+   adb shell appops set com.familyframe.dashboard SYSTEM_ALERT_WINDOW allow
    adb shell am start -n com.familyframe.dashboard/.MainActivity
    ```
+
+   The appops command enables the floating return button before you open Android settings. Confirm that your installed version is **1.1** with `adb shell dumpsys package com.familyframe.dashboard | grep versionName`.
 
 3. On the frame, tap **Frame → Set Family Frame as Home** and select **Family Frame** as the Home app. If Android displays a chooser, select **Always**. The Android 6 boot receiver also requests dashboard startup after boot. The Home setting is important on firmware that launches its photo interface during startup.
 4. Use **Settings → Import backup** inside the dashboard to choose your previous JSON backup. Confirm the import. Use **Frame → Choose adhan MP3** to copy your recording into the app. Re-enter your prayer preferences and test adhan before enabling automatic playback.
@@ -81,3 +84,4 @@ An existing JRE with Eclipse ECJ can compile sources by setting `ECJ_JAR` to tha
 The automated checks exercise the bundled dashboard integration, backup bridge, radio routing, API allowlist and loopback MP3 server. They complement the real-device checks above.
 
 [Android WebView content](https://developer.android.com/develop/ui/views/layout/webapps/load-local-content) · [Android Home intent](https://developer.android.com/reference/android/content/Intent#CATEGORY_HOME) · [APK signing](https://developer.android.com/tools/apksigner)
+
