@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.ResultReceiver;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -51,6 +54,11 @@ public final class MainActivity extends Activity {
     private WebView web;
     private ValueCallback<Uri[]> fileSelection;
     private AlertDialog options;
+    private final Handler navigation = new Handler(Looper.getMainLooper());
+    private Runnable pendingExternal;
+    private boolean awaitingReturnPermission;
+    private final Runnable permissionTimeout = () -> startActivity(
+            new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP));
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -91,6 +99,19 @@ public final class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        navigation.removeCallbacks(permissionTimeout);
+        FrameService.hideReturn(this);
+        if (awaitingReturnPermission) {
+            awaitingReturnPermission = false;
+            Runnable continuation = pendingExternal;
+            pendingExternal = null;
+            if (Settings.canDrawOverlays(this) && continuation != null) {
+                navigation.post(continuation);
+            } else {
+                cancelFileSelection();
+                message("The floating return button needs Display over other apps permission.");
+            }
+        }
         if (web != null) {
             web.onResume();
             FrameService.start(this);
@@ -131,11 +152,56 @@ public final class MainActivity extends Activity {
     }
 
     private void openSettings(String action) {
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-        try {
-            startActivity(new Intent(action));
-        } catch (ActivityNotFoundException error) {
-            message("This settings screen is unavailable on this frame.");
+        launchExternal(new Intent(action), 12);
+    }
+
+    private void launchExternal(Intent intent, int request) {
+        if (!Settings.canDrawOverlays(this)) {
+            new AlertDialog.Builder(this).setTitle("Enable the return button")
+                    .setMessage("Allow Family Frame to display a small Back button over Android settings. "
+                            + "Turn on Display over other apps. This permission screen returns to "
+                            + "Family Frame automatically after 20 seconds.")
+                    .setPositiveButton("Enable", (dialog, which) -> {
+                        pendingExternal = () -> launchExternal(intent, request);
+                        try {
+                            startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:" + getPackageName())), 13);
+                            awaitingReturnPermission = true;
+                            navigation.postDelayed(permissionTimeout, 20000);
+                        } catch (ActivityNotFoundException error) {
+                            pendingExternal = null;
+                            cancelFileSelection();
+                            message("Enable SYSTEM_ALERT_WINDOW for Family Frame using ADB.");
+                        }
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> cancelFileSelection())
+                    .setOnCancelListener(dialog -> cancelFileSelection()).show();
+            return;
+        }
+        FrameService.showReturn(this, new ResultReceiver(navigation) {
+            @Override protected void onReceiveResult(int result, Bundle data) {
+                if (isFinishing() || isDestroyed()) return;
+                if (result != 1) {
+                    cancelFileSelection();
+                    message("Could not show the return button. Check Display over other apps permission.");
+                    return;
+                }
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                try {
+                    startActivityForResult(intent, request);
+                } catch (ActivityNotFoundException error) {
+                    FrameService.hideReturn(MainActivity.this);
+                    cancelFileSelection();
+                    message("This screen is unavailable. For copied files, use the Frame import menu.");
+                }
+            }
+        });
+    }
+
+    private void cancelFileSelection() {
+        if (fileSelection != null) {
+            fileSelection.onReceiveValue(null);
+            fileSelection = null;
         }
     }
 
@@ -161,11 +227,7 @@ public final class MainActivity extends Activity {
     private void chooseAdhan() {
         Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("audio/*")
                 .addCategory(Intent.CATEGORY_OPENABLE);
-        try {
-            startActivityForResult(pick, PICK_ADHAN);
-        } catch (ActivityNotFoundException error) {
-            message("Copy adhan.mp3 into the app's import folder, then use Import copied adhan.");
-        }
+        launchExternal(pick, PICK_ADHAN);
     }
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
@@ -330,15 +392,9 @@ public final class MainActivity extends Activity {
                 FileChooserParams parameters) {
             if (fileSelection != null) fileSelection.onReceiveValue(null);
             fileSelection = callback;
-            try {
-                Intent intent = parameters.createIntent();
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                startActivityForResult(intent, PICK_FILE);
-            } catch (ActivityNotFoundException error) {
-                fileSelection.onReceiveValue(null);
-                fileSelection = null;
-                message("No file picker is installed. For a backup, use Import copied backup in Frame options.");
-            }
+            Intent intent = parameters.createIntent();
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            launchExternal(intent, PICK_FILE);
             return true;
         }
     }
@@ -352,6 +408,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        navigation.removeCallbacksAndMessages(null);
         if (fileSelection != null) fileSelection.onReceiveValue(null);
         if (web != null) {
             web.removeJavascriptInterface("FrameNative");

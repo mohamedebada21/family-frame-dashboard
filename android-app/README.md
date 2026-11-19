@@ -17,7 +17,13 @@ Family Frame is a standalone Android application for the 102KZ Android 6.0.1 fra
 5. Test **Clock & Weather → Play radio**. The built-in relay starts automatically inside Family Frame. Its private port is 8768.
 6. Disconnect USB, power the frame off and on, and confirm that Family Frame opens by itself. Check saved events, weather, prayer times, delayed adhan, radio and Wi-Fi after restart. The computer can remain disconnected during daily use.
 
-**Frame** stays available in the bottom-right corner. It opens Wi-Fi, date/time, volume and Home settings. Android Back also opens this menu. System navigation is shown when opening Android settings so you can return to the dashboard.
+**Frame** stays available in the bottom-right corner. It opens Wi-Fi, date/time, volume and Home settings. Android Back also opens this menu. Version 1.1 adds an on-screen **Dashboard** button and a floating **Back to Family Frame** button while Android settings or a file picker is open. The floating button requires the one-time **Display over other apps** permission. On the reference frame, you can grant it after installation with:
+
+```bash
+adb shell appops set com.familyframe.dashboard SYSTEM_ALERT_WINDOW allow
+```
+
+Alternatively, opening an external settings screen from the Frame menu offers an **Enable return button** dialog. Turn on the Android permission switch. That permission screen returns to Family Frame automatically after 20 seconds on the Android 6 frame. Once permission is granted, the intended settings screen opens with the return button. Tap it to return. The floating button is removed when the dashboard resumes.
 
 ## Frames without a working file picker
 
@@ -40,8 +46,10 @@ Prayer preferences and the separate adhan recording still need to be saved separ
 
 ## Runtime behavior
 
+Version 1.1 also includes an editable weekly meal plan on the dashboard and simultaneous Fahrenheit/Celsius weather. Use Meals or the dashboard weekly card to plan breakfast, lunch and dinner. Clock settings chooses which temperature unit appears first.
+
 - Dashboard layout, events, chores, photos and clock preferences use the shared HTML source bundled into the APK at build time. An APK update is required to update that embedded HTML.
-- The Android app provides the Home screen, boot receiver, file picker, MP3 import, backup export, device settings and foreground relay service. Daily use opens Family Frame directly.
+- The Android app provides the Home screen, boot receiver, file picker, MP3 import, backup export, device settings, floating return button and foreground relay service. Daily use opens Family Frame directly.
 - The relay reuses `android-relay`'s server, with a separate port so the older companion can coexist. It binds to `127.0.0.1` and serves a fixed radio endpoint and the imported adhan file.
 - Prayer calculations remain fixed to Queens / America/New_York. Automatic adhan runs in the dashboard while the app is open and the screen is kept awake. This version retains the foreground prayer scheduling behavior.
 - Weather and radio require internet. Radio starts when you tap Play, including after reboot. Saved dashboard data and the clock work offline.

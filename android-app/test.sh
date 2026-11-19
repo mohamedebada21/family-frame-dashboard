@@ -5,6 +5,7 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 python3 "$root/prepare_assets.py" "$work/assets"
 node "$root/tests/dashboard.cjs" "$work/assets/family-calendar.html"
+node "$root/../tests/meal-weather.cjs" "$work/assets/family-calendar.html"
 sources=("$root/src/com/familyframe/dashboard/NetworkPolicy.java"
   "$root/../android-relay/src/com/familyframe/radio/RelayServer.java"
   "$root"/tests/*.java)

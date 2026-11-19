@@ -41,14 +41,15 @@ source = source.replace("All features here work locally; opening this page on an
                         "Calendar data stays on this frame. Weather and radio use Wi-Fi.")
 source = source.replace("Events and lists currently stay in this browser.", "Events and lists currently stay on this frame.")
 source = source.replace("clearing browser data", "clearing app data")
-source = source.replace("Family Hub · Version 7.6", "Family Frame · Android 1.0")
+source = source.replace("Family Hub · Version 7.7", "Family Frame · Android 1.1")
 replace_once("</style>", """
-.frame-native-button{position:fixed;right:12px;bottom:10px;z-index:2000;
+.frame-native-back{left:12px;right:auto!important}.frame-native-button{position:fixed;right:12px;bottom:10px;z-index:2000;
 background:#f3eedf;color:#123d35;border:1px solid #a4b9b0;padding:8px 16px;
 min-height:44px;border-radius:22px;box-shadow:0 2px 10px #0002}
 </style>""")
 # The native bridge is present only on this bundled, trusted document.
-replace_once("<script>", """<button class="frame-native-button" onclick="FrameNative.showSettings()" aria-label="Frame settings">⚙ Frame</button>
+replace_once("<script>", """<button class="frame-native-button frame-native-back" onclick="go('Dashboard')" aria-label="Back to dashboard">← Dashboard</button>
+<button class="frame-native-button" onclick="FrameNative.showSettings()" aria-label="Frame settings">⚙ Frame</button>
 <script>""")
 replace_once("window.prayerSettings=function(){var body=", """window.prayerSettings=function(){var body='<button type="button" onclick="FrameNative.chooseAdhan()">Choose adhan MP3</button>'+""")
 # Keep all dashboard validation and the existing import confirmation.

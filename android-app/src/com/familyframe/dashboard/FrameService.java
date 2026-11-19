@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.ResultReceiver;
 import android.util.Log;
 import com.familyframe.radio.RelayServer;
 import java.io.File;
@@ -18,6 +19,22 @@ public final class FrameService extends Service {
     static final int PORT = 8768;
     private static final String CHANNEL = "family_frame";
     private volatile RelayServer server;
+    private SettingsReturnButton returnButton;
+    private static final String SHOW_RETURN = "com.familyframe.dashboard.SHOW_RETURN";
+    private static final String HIDE_RETURN = "com.familyframe.dashboard.HIDE_RETURN";
+
+    static void showReturn(Context context, ResultReceiver callback) {
+        Intent intent = new Intent(context, FrameService.class).setAction(SHOW_RETURN);
+        intent.putExtra("callback", callback);
+        if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent);
+        else context.startService(intent);
+    }
+
+    static void hideReturn(Context context) {
+        Intent intent = new Intent(context, FrameService.class).setAction(HIDE_RETURN);
+        if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent);
+        else context.startService(intent);
+    }
 
     static void start(Context context) {
         Intent intent = new Intent(context, FrameService.class);
@@ -41,6 +58,14 @@ public final class FrameService extends Service {
                 .setContentTitle("Family Frame").setContentText("Dashboard audio is ready")
                 .setContentIntent(open).setOngoing(true).build());
         if (server == null) startServer();
+        if (returnButton == null) returnButton = new SettingsReturnButton(this);
+        if (intent != null && SHOW_RETURN.equals(intent.getAction())) {
+            boolean ready = returnButton.show();
+            ResultReceiver callback = intent.getParcelableExtra("callback");
+            if (callback != null) callback.send(ready ? 1 : 0, null);
+        } else if (intent != null && HIDE_RETURN.equals(intent.getAction())) {
+            returnButton.hide();
+        }
         return START_STICKY;
     }
 
@@ -68,6 +93,7 @@ public final class FrameService extends Service {
     }
 
     @Override public void onDestroy() {
+        if (returnButton != null) returnButton.hide();
         RelayServer relay = server;
         server = null;
         if (relay != null) relay.close();

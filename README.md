@@ -24,10 +24,11 @@ Then follow [SETUP.md](SETUP.md). Do not run the installer until ADB and Fully a
 
 ## Features
 
-- Family calendar, chores, shopping, meals, members and reward points.
+- Family calendar, chores, shopping, members and reward points.
+- Editable seven-day breakfast, lunch and dinner plan on the dashboard and Meals screen, with saved meals and week navigation.
 - A family photo and four clock styles: classic, flip, analog and night.
 - Clock size/position controls and a combined clock/weather/prayer page.
-- Weather from Open-Meteo with selectable city and temperature units.
+- Weather from Open-Meteo with selectable city, Fahrenheit and Celsius displayed together, and selectable primary units.
 - Five daily prayer start times for Queens, next-prayer countdown and optional adhan playback.
 - Cairo Quran Radio on **Clock & Weather** and **Prayer clock**. Tap **Play radio** to listen over Wi-Fi. The radio stops for the adhan. Tap Play again when the adhan ends.
 - If a feed is silent or stalls, select the other feed and tap **Play radio**. The broadcaster's official feed uses HLS, and support depends on the frame's browser.
