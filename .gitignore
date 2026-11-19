@@ -21,3 +21,7 @@ node_modules/
 *.key
 *.p12
 *.pfx
+
+# Python build cache
+__pycache__/
+*.pyc

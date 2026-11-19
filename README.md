@@ -2,6 +2,10 @@
 
 A local touchscreen family dashboard with a combined clock, weather and Queens prayer screen. Version 7.6 adds an on-frame radio relay for older media players that cannot connect to the HTTPS feeds.
 
+## Standalone Android app
+
+To open the dashboard directly as the frame's Home screen, use [Family Frame for Android](android-app/README.md). It bundles the dashboard and radio relay into one installable APK, with a Frame menu for Wi-Fi, audio and Home settings. The app uses Android's system WebView for the existing dashboard layout.
+
 ## Start here
 
 1. Follow [SETUP.md](SETUP.md) for a new Android device.
@@ -20,10 +24,11 @@ Then follow [SETUP.md](SETUP.md). Do not run the installer until ADB and Fully a
 
 ## Features
 
-- Family calendar, chores, shopping, meals, members and reward points.
+- Family calendar, chores, shopping, members and reward points.
+- Editable seven-day breakfast, lunch and dinner plan on the dashboard and Meals screen, with saved meals and week navigation.
 - A family photo and four clock styles: classic, flip, analog and night.
 - Clock size/position controls and a combined clock/weather/prayer page.
-- Weather from Open-Meteo with selectable city and temperature units.
+- Weather from Open-Meteo with selectable city, Fahrenheit and Celsius displayed together, and selectable primary units.
 - Five daily prayer start times for Queens, next-prayer countdown and optional adhan playback.
 - Cairo Quran Radio on **Clock & Weather** and **Prayer clock**. Tap **Play radio** to listen over Wi-Fi. The radio stops for the adhan. Tap Play again when the adhan ends.
 - If a feed is silent or stalls, select the other feed and tap **Play radio**. The broadcaster's official feed uses HLS, and support depends on the frame's browser.
@@ -50,6 +55,7 @@ The owner confirmed the combined page works on a 102KZ photo frame: Android 6.0.
 ```text
 family-calendar.html          Working app; no build step
 SETUP.md                      New-device procedure
+android-app/                  Standalone Android app and setup
 docs/                         Troubleshooting, backups and GitHub setup
 scripts/install.sh            Checked ADB file deployment (Mac/Linux)
 tests/check-dashboard.cjs     Node-based regression checks
